@@ -1,0 +1,43 @@
+# Python virtual environments
+venv/
+.venv/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Large model / index directories
+faiss_store/
+faiss_index/
+index/
+vectorstore/
+kb/
+data/
+models/
+storage/
+
+# Documents
+*.pdf
+*.doc
+*.docx
+*.pptx
+*.xlsx
+
+# Misc large directories
+downloads/
+temp/
+tmp/
+
+# Node stuff (if any)
+node_modules/
+
+# IDE / OS trash
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Git folders
+.git/
+.gitignore

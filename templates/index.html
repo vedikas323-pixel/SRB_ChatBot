@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NMIMS SRB Chatbot</title>
+
+  <style>
+    /* Markdown Table Styling */
+    .bubble table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      background: #0f1629;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .bubble th, .bubble td {
+      border: 1px solid #2a3a5e;
+      padding: 8px 12px;
+      text-align: center;
+      color: #e8eefc;
+    }
+    .bubble th {
+      background: #1c2642;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .bubble tr:nth-child(even) { background: #121a2e; }
+
+    :root {
+      --bg: #0b0e14;
+      --panel: #111727;
+      --soft: #1a2336;
+      --text: #e8eefc;
+      --muted: #9fb0d1;
+      --primary: #2f7af8;
+      --bubble: #182037;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 80% -200px, #1b2a55 0%, var(--bg) 40%),
+                  linear-gradient(180deg, #0b0e14 0%, #0b0e14 100%);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      height: 100%;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      border-right: 1px solid #1f2942;
+      background: rgba(17, 23, 39, .8);
+      backdrop-filter: blur(6px);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px; font-weight: 700;
+      letter-spacing: .2px; color: var(--text);
+    }
+
+    .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+
+    .new-btn {
+      border: 1px solid #263352;
+      background: var(--soft);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .new-btn:hover { background: #212b45; }
+
+    .history {
+      margin: 0; padding: 0; list-style: none; overflow: auto; flex: 1;
+    }
+    .history li {
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .history li:hover { background: #131b2e; color: var(--text); }
+
+    /* Main */
+    .main { display: flex; flex-direction: column; height: 100%; }
+    .messages {
+      flex: 1;
+      overflow: auto;
+      padding: 24px 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row { display: flex; width: 100%; }
+    .row.user { justify-content: flex-end; }
+
+    .bubble {
+      max-width: min(780px, 75%);
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--bubble);
+      color: var(--text);
+      box-shadow: 0 6px 20px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.02);
+      word-wrap: break-word;
+    }
+
+    .row.user .bubble {
+      background: linear-gradient(180deg, #245df0, #2f7af8);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 4px 0 0;
+    }
+
+    /* Input bar */
+    .inputbar {
+      border-top: 1px solid #1f2942;
+      padding: 14px;
+      background: rgba(17, 23, 39, .75);
+    }
+
+    .bar {
+      display: flex;
+      gap: 10px;
+      max-width: 900px;
+      margin: 0 auto;
+      background: #0f1629;
+      border: 1px solid #23304e;
+      border-radius: 16px;
+      padding: 8px;
+    }
+
+    .bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 16px;
+      padding: 10px 12px;
+    }
+
+    .send {
+      background: var(--primary);
+      border: none;
+      color: white;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .send:disabled { opacity: .6; cursor: not-allowed; }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .bubble { max-width: 90%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="dot"></span> NMIMS SRB Chat</div>
+      <button class="new-btn" id="newChat">+ New chat</button>
+      <ul class="history" id="history"></ul>
+      <div class="hint">Ollama must be running locally.</div>
+    </aside>
+
+    <main class="main">
+      <div class="messages" id="messages">
+        <div class="row">
+          <div class="bubble">Hello! How can I help you with the NMIMS SRB today?</div>
+        </div>
+      </div>
+
+      <div class="inputbar">
+        <form class="bar" id="chatForm" autocomplete="off">
+          <input id="text" type="text" placeholder="Ask a question…" />
+          <button class="send" id="sendBtn" type="submit">Send</button>
+        </form>
+        <div class="hint">Press Enter to send. Shift+Enter for a new line.</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Markdown support -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    const messages = document.getElementById('messages');
+    const history = document.getElementById('history');
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('text');
+    const sendBtn = document.getElementById('sendBtn');
+    const newChatBtn = document.getElementById('newChat');
+
+    function addMessage(text, who = 'bot') {
+      const row = document.createElement('div');
+      row.className = 'row ' + (who === 'user' ? 'user' : '');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+  // ✅ Allow HTML content safely without escaping
+  // If text includes <a> tag, skip markdown parsing
+      if (text.includes("<a ")) {
+        bubble.innerHTML = text;
+      } else {
+        bubble.innerHTML = marked.parse(text, { mangle: false, headerIds: false });
+      }
+
+  // ✅ Make sure any links open safely in new tabs
+      bubble.querySelectorAll("a").forEach(link => {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+        link.style.color = "#2f7af8";
+        link.style.fontWeight = "600";
+        link.style.textDecoration = "none";
+    });
+
+      row.appendChild(bubble);
+      messages.appendChild(row);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+
+    function addHistoryItem(text) {
+      const li = document.createElement('li');
+      li.textContent = text;
+      li.title = text;
+      li.onclick = () => addMessage(text, 'user');
+      history.prepend(li);
+    }
+
+    newChatBtn.onclick = () => {
+      messages.innerHTML = '';
+      addMessage('New chat started. Ask me anything about NMIMS SRB!');
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      addMessage(text, 'user');
+      addHistoryItem(text);
+      input.value = '';
+      input.focus();
+
+      sendBtn.disabled = true;
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: text })
+        });
+
+        const data = await res.json();
+
+        if (data.download_link) {
+          // Extract form name for user-friendly label
+          const fileName = data.download_link.split('/').pop().replace('.docx', '');
+          const prettyName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+          addMessage(`
+            ${data.answer}<br><br>
+            <a href="${data.download_link}"
+               style="color:#2f7af8; text-decoration:underline; font-weight:600;">
+               📄 Download ${prettyName} Form
+            </a>
+          `);
+        } else {
+          addMessage(data.answer || 'Sorry, I could not find an answer.');
+        }
+
+      } catch (err) {
+        addMessage('⚠️ Network or server error. Is the backend running?');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>
